@@ -4,18 +4,18 @@ ARG TARGETARCH
 WORKDIR /src
 
 # Copia apenas os arquivos de projeto para restaurar mais rápido
-COPY ["GamePlatform.Api/GamePlatform.Api.csproj", "GamePlatform.Api/"]
-COPY ["GamePlatform.Application/GamePlatform.Application.csproj", "GamePlatform.Application/"]
-COPY ["GamePlatform.Domain/GamePlatform.Domain.csproj", "GamePlatform.Domain/"]
-COPY ["GamePlatform.Infrastructure/GamePlatform.Infrastructure.csproj", "GamePlatform.Infrastructure/"]
+COPY ["GamePlatform.Usuarios.Api/GamePlatform.Usuarios.Api.csproj", "GamePlatform.Usuarios.Api/"]
+COPY ["GamePlatform.Usuarios.Application/GamePlatform.Usuarios.Application.csproj", "GamePlatform.Usuarios.Application/"]
+COPY ["GamePlatform.Usuarios.Domain/GamePlatform.Usuarios.Domain.csproj", "GamePlatform.Usuarios.Domain/"]
+COPY ["GamePlatform.Usuarios.Infrastructure/GamePlatform.Usuarios.Infrastructure.csproj", "GamePlatform.Usuarios.Infrastructure/"]
 
 # Restaurar os pacotes
-RUN dotnet restore -a $TARGETARCH "GamePlatform.Api/GamePlatform.Api.csproj"
+RUN dotnet restore -a $TARGETARCH "GamePlatform.Usuarios.Api/GamePlatform.Usuarios.Api.csproj"
 
 # Copiar tudo e compilar
 COPY . .
-WORKDIR "/src/GamePlatform.Api"
-RUN dotnet publish -a $TARGETARCH "GamePlatform.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
+WORKDIR "/src/GamePlatform.Usuarios.Api"
+RUN dotnet publish -a $TARGETARCH "GamePlatform.Usuarios.Api.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
 # Etapa 2: imagem final
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
@@ -37,4 +37,5 @@ WORKDIR /app
 COPY --from=build /app/publish .
 
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "GamePlatform.Api.dll"]
+ENV ASPNETCORE_URLS=http://+:8080
+ENTRYPOINT ["dotnet", "GamePlatform.Usuarios.Api.dll"]

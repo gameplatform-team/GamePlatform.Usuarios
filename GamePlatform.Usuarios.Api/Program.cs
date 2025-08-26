@@ -24,7 +24,7 @@ builder.Services.AddCustomHttpLogging();
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
 // Health check
-//builder.AddCustomHealthCheck();
+builder.AddCustomHealthCheck();
 
 // Adicionar configuracoes do banco de dados e servicos da infraestrutura
 builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -61,14 +61,14 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 // Health check
-//app.UseHealthChecks("/health", new HealthCheckOptions
-//{
-//    Predicate = _ => true,
-//    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-//}).UseHealthChecksUI(options =>
-//{
-//    options.UIPath = "/health-ui";
-//});
+app.UseHealthChecks("/health", new HealthCheckOptions
+{
+    Predicate = _ => true,
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+}).UseHealthChecksUI(options =>
+{
+    options.UIPath = "/health-ui";
+});
 
 // Middlewares HTTP
 app.UseHttpsRedirection();
