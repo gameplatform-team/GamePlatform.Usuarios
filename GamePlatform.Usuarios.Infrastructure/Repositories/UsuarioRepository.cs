@@ -1,7 +1,9 @@
 ﻿using GamePlatform.Usuarios.Domain.Entities;
+using GamePlatform.Usuarios.Domain.Events;
 using GamePlatform.Usuarios.Domain.Interfaces;
 using GamePlatform.Usuarios.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 namespace GamePlatform.Usuarios.Infrastructure.Repositories;
 
@@ -11,42 +13,100 @@ public class UsuarioRepository(DataContext context) : IUsuarioRepository
 
     public async Task<Usuario?> ObterPorIdAsync(Guid id)
     {
-        return await _context.Usuarios.FindAsync(id);
+        var eventos = await _context.Eventos
+            .Where(e => e.AggregateId == id)
+            .OrderBy(e => e.Versao)
+            .ToListAsync();
+
+        if (!eventos.Any()) return null;
+
+        var eventosDominio = new List<object>();
+
+        foreach (var e in eventos)
+        {
+            var tipo = Type.GetType(e.TipoEvento);
+            if (tipo == null)
+            {
+                throw new Exception($"Tipo de evento não encontrado: {e.TipoEvento}");
+            }
+
+            var evento = JsonSerializer.Deserialize(e.Dados, tipo);
+            if (evento != null)
+                eventosDominio.Add(evento);
+        }
+
+        return Usuario.Reconstituir(eventosDominio);
     }
 
-    public async Task<Usuario?> ObterPorEmailAsync(string email)
-    {
-        return await _context.Usuarios.FirstOrDefaultAsync(u => u.Email == email);
-    }
 
-    public void Remover(Usuario usuario)
+    public async Task SalvarAsync(Usuario usuario, int versaoEsperada)
     {
-        _context.Usuarios.Remove(usuario);
-    }
+        var eventos = usuario.Changes
+            .Select((e, i) =>
+                new Evento(
+                    usuario.Id,
+                    versaoEsperada + i + 1,
+                    e.GetType().AssemblyQualifiedName!,
+                    JsonSerializer.Serialize(e)
+                )).ToList();
 
-    public async Task<IEnumerable<Usuario>> ListarTodosAsync()
-    {
-        return await _context.Usuarios.ToListAsync();
-    }
+        await _context.Eventos.AddRangeAsync(eventos);
 
-    public async Task<bool> ExisteEmailAsync(string email)
-    {
-        return await _context.Usuarios.AnyAsync(u => u.Email == email);
-    }
+        foreach (var e in usuario.Changes)
+        {
+            switch (e)
+            {
+                case UsuarioRegistrado ev:
+                    _context.Usuarios.Add(new UsuarioProjecao
+                    {
+                        Id = ev.UsuarioId,
+                        Nome = ev.Nome,
+                        Email = ev.Email,
+                        Role = "Usuario",
+                        SenhaHash = ev.senha,
+                        Ativo = true
+                    });
+                    break;
 
-    public async Task AdicionarAsync(Usuario usuario)
-    {
-        await _context.Usuarios.AddAsync(usuario);
-    }
+                case UsuarioPromovido ev:
+                    var usuarioProj = await _context.Usuarios.FindAsync(ev.UsuarioId);
+                    if (usuarioProj != null) usuarioProj.Role = "Admin";
+                    break;
 
-    public async Task SalvarAsync()
-    {
+                case UsuarioAtualizado ev:
+                    var usuarioUpdate = await _context.Usuarios.FindAsync(ev.UsuarioId);
+                    if (usuarioUpdate != null)
+                    {
+                        if (!string.IsNullOrEmpty(ev.Nome))
+                            usuarioUpdate.Nome = ev.Nome;
+
+                        if (!string.IsNullOrEmpty(ev.Email))
+                            usuarioUpdate.Email = ev.Email;
+
+                        if (!string.IsNullOrEmpty(ev.Role))
+                            usuarioUpdate.Role = ev.Role;
+
+                        if (!string.IsNullOrEmpty(ev.NovaSenha))
+                            usuarioUpdate.SenhaHash = ev.NovaSenha;
+                    }
+                    break;
+
+                case UsuarioExcluido ev:
+                    var usuarioExcluir = await _context.Usuarios.FindAsync(ev.UsuarioId);
+                    if (usuarioExcluir != null)
+                        usuarioExcluir.Ativo = false;
+                    break;
+            }
+        }
+
         await _context.SaveChangesAsync();
     }
 
-    public async Task<bool> EmailJaExisteAsync(string email, Guid? id = null)
+    public async Task<int> ObterVersaoAsync(Guid id)
     {
-        return await _context.Usuarios
-            .AnyAsync(u => u.Email == email && (id == null || u.Id != id));
+        var versao = await _context.Eventos
+            .Where(e => e.AggregateId == id)
+            .MaxAsync(e => (int?)e.Versao);
+        return versao ?? 0;
     }
 }

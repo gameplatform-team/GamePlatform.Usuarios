@@ -12,15 +12,15 @@ public static class DbInitializer
 
         if (!context.Usuarios.Any())
         {
-            var admin = new Usuario(
-                nome: "Administrador",
-                email: "admin@gameplatform.com",
-                senhaHash: BCrypt.Net.BCrypt.HashPassword("123456"),
-                role: "Admin"
-            );
+            //var admin = new UsuarioProjecao( 
+            //    nome: "Administrador",
+            //    email: "admin@gameplatform.com",
+            //    senhaHash: BCrypt.Net.BCrypt.HashPassword("123456"),
+            //    role: "Admin"
+            //);
 
-            context.Usuarios.Add(admin);
-            await context.SaveChangesAsync();
+            //context.Usuarios.Add(admin);
+            //await context.SaveChangesAsync();
         }
     }
 }

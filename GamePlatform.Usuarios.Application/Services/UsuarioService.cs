@@ -16,13 +16,15 @@ namespace GamePlatform.Usuarios.Application.Services;
 public class UsuarioService : IUsuarioService
 {
     private readonly IUsuarioRepository _usuarioRepository;
+    private readonly IUsuarioLeituraRepository _usuarioLeituraRepository;
     private readonly IConfiguration _config;
     private readonly ILogger<UsuarioService> _logger;
     private readonly IUsuarioContextService _usuarioContext;
 
-    public UsuarioService(IUsuarioRepository usuarioRepository, IConfiguration config, ILogger<UsuarioService> logger, IUsuarioContextService usuarioContext)
+    public UsuarioService(IUsuarioRepository usuarioRepository, IUsuarioLeituraRepository usuarioLeituraRepository, IConfiguration config, ILogger<UsuarioService> logger, IUsuarioContextService usuarioContext)
     {
         _usuarioRepository = usuarioRepository;
+        _usuarioLeituraRepository = usuarioLeituraRepository;
         _config = config;
         _logger = logger;
         _usuarioContext = usuarioContext;
@@ -30,77 +32,8 @@ public class UsuarioService : IUsuarioService
 
     public async Task<UsuarioDto?> ObterPorIdAsync(Guid id)
     {
-        var usuario = await _usuarioRepository.ObterPorIdAsync(id);
+        var usuario = await _usuarioLeituraRepository.ObterPorIdAsync(id);
         return usuario is null ? null : new UsuarioDto(usuario.Id, usuario.Nome, usuario.Email, usuario.Role);
-    }
-
-    public async Task<BaseResponseDto> AtualizarAsync(Guid id, AtualizarUsuarioDto dto)
-    {
-        try
-        {
-            var usuario = await _usuarioRepository.ObterPorIdAsync(id);
-
-            if (usuario == null)
-            {
-                _logger.LogWarning("Tentativa de atualizar usuário com ID inválido: {UserId}", id);
-                return new BaseResponseDto(false, "Usuário não encontrado.");
-            }
-
-            if (!string.IsNullOrEmpty(dto.Email) && await _usuarioRepository.EmailJaExisteAsync(dto.Email, id))
-            {
-                _logger.LogWarning("Email em uso por outro usuário: {Email}", dto.Email);
-                return new BaseResponseDto(false, "Este e-mail já está em uso por outro usuário.");
-            }
-
-            var ehAdmin = _usuarioContext.UsuarioEhAdmin();
-
-            usuario.Atualizar(ehAdmin, dto.Nome, dto.Email, dto.NovaSenha, dto.Role);
-
-            await _usuarioRepository.SalvarAsync();
-
-            _logger.LogInformation("Usuário atualizado com sucesso: {UserId}", usuario.Id);
-
-            return new BaseResponseDto(true, "Usuário atualizado com sucesso.");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao atualizar usuário {UserId}", id);
-            return new BaseResponseDto(false, "Erro ao atualizar o usuário.");
-        }
-    }
-
-    public async Task<BaseResponseDto> ExcluirAsync(Guid id)
-    {
-        try
-        {
-            var usuario = await _usuarioRepository.ObterPorIdAsync(id);
-
-            if (usuario is null)
-            {
-                _logger.LogWarning("Tentativa de exclusão de usuário inexistente: {UserId}", id);
-                return new BaseResponseDto(false, "Usuário não encontrado.");
-            }
-
-            _usuarioRepository.Remover(usuario);
-
-            await _usuarioRepository.SalvarAsync();
-
-            _logger.LogInformation("Usuário excluído com sucesso: {UserId}", id);
-
-            return new BaseResponseDto(true, "Usuário excluído com sucesso.");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Erro ao excluir usuário {UserId}", id);
-            return new BaseResponseDto(false, "Erro ao excluir o usuário.");
-        }
-    }
-
-    public async Task<IEnumerable<UsuarioDto>> ListarTodosAsync()
-    {
-        var usuarios = await _usuarioRepository.ListarTodosAsync();
-
-        return usuarios.Select(u => new UsuarioDto(u.Id, u.Nome, u.Email, u.Role));
     }
 
     public async Task<BaseResponseDto> RegistrarAsync(RegistrarUsuarioDto dto)
@@ -113,7 +46,7 @@ public class UsuarioService : IUsuarioService
                 return new BaseResponseDto(false, "Formato de e-mail inválido.");
             }
 
-            if (!string.IsNullOrEmpty(dto.Email) && await _usuarioRepository.EmailJaExisteAsync(dto.Email))
+            if (!string.IsNullOrEmpty(dto.Email) && await _usuarioLeituraRepository.EmailJaExisteAsync(dto.Email))
             {
                 _logger.LogWarning("Email em uso por outro usuário: {Email}", dto.Email);
                 return new BaseResponseDto(false, "Este e-mail já está em uso por outro usuário.");
@@ -125,7 +58,7 @@ public class UsuarioService : IUsuarioService
                 return new BaseResponseDto(false, "A senha deve ter no mínimo 8 caracteres e conter letras, números e caracteres especiais.");
             }
 
-            if (await _usuarioRepository.ExisteEmailAsync(dto.Email))
+            if (await _usuarioLeituraRepository.ExisteEmailAsync(dto.Email))
             {
                 _logger.LogWarning("Tentativa de registro com e-mail já existente: {Email}", dto.Email);
                 return new BaseResponseDto(false, "E-mail já cadastrado.");
@@ -133,11 +66,9 @@ public class UsuarioService : IUsuarioService
 
             var senhaHash = BCrypt.Net.BCrypt.HashPassword(dto.Senha);
 
-            var usuario = new Usuario(dto.Nome, dto.Email, senhaHash, "Usuario");
+            var usuario = Usuario.Registrar(Guid.NewGuid(), dto.Nome, dto.Email, senhaHash);
 
-            await _usuarioRepository.AdicionarAsync(usuario);
-
-            await _usuarioRepository.SalvarAsync();
+            await _usuarioRepository.SalvarAsync(usuario, 0);
 
             _logger.LogInformation("Usuário registrado com sucesso: {Email}", dto.Email);
 
@@ -152,7 +83,7 @@ public class UsuarioService : IUsuarioService
 
     public async Task<(bool sucesso, string? token, string mensagem)> LoginAsync(LoginDto dto)
     {
-        var usuario = await _usuarioRepository.ObterPorEmailAsync(dto.Email);
+        var usuario = await _usuarioLeituraRepository.ObterPorEmailAsync(dto.Email);
 
         if (usuario == null || !BCrypt.Net.BCrypt.Verify(dto.Senha, usuario.SenhaHash))
         {
@@ -167,7 +98,7 @@ public class UsuarioService : IUsuarioService
         return (true, token, "Login realizado com sucesso.");
     }
 
-    private string GerarToken(Usuario usuario)
+    private string GerarToken(UsuarioProjecao usuario)
     {
         var claims = new[]
         {
@@ -197,5 +128,78 @@ public class UsuarioService : IUsuarioService
         );
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    public async Task PromoverAsync(Guid id)
+    {
+        var usuario = await _usuarioRepository.ObterPorIdAsync(id);
+        if (usuario is null) throw new Exception("Usuário não encontrado");
+
+        usuario.Promover();
+        await _usuarioRepository.SalvarAsync(usuario, await _usuarioRepository.ObterVersaoAsync(id));
+    }
+
+    public async Task<IEnumerable<UsuarioDto>> ObterTodosAsync()
+    {
+        var usuarios = await _usuarioLeituraRepository.ListarTodosAsync();
+        return usuarios.Select(u => new UsuarioDto(u.Id, u.Nome, u.Email, u.Role));
+    }
+
+    public async Task<BaseResponseDto> AtualizarAsync(Guid id, AtualizarUsuarioDto dto)
+    {
+        try
+        {
+            var usuario = await _usuarioRepository.ObterPorIdAsync(id);
+
+            if (usuario == null)
+            {
+                _logger.LogWarning("Tentativa de atualizar usuário com ID inválido: {UserId}", id);
+                return new BaseResponseDto(false, "Usuário não encontrado.");
+            }
+
+            if (!string.IsNullOrEmpty(dto.Email) && await _usuarioLeituraRepository.EmailJaExisteAsync(dto.Email, id))
+            {
+                _logger.LogWarning("Email em uso por outro usuário: {Email}", dto.Email);
+                return new BaseResponseDto(false, "Este e-mail já está em uso por outro usuário.");
+            }
+
+            var ehAdmin = _usuarioContext.UsuarioEhAdmin();
+
+            //var evento = new UsuarioAtualizado(id, dto.Nome, dto.Email, dto.NovaSenha, dto.Role);
+
+            usuario.Atualizar(ehAdmin, dto.Nome, dto.Email, dto.NovaSenha, dto.Role);
+
+            await _usuarioRepository.SalvarAsync(usuario, await _usuarioRepository.ObterVersaoAsync(id));
+
+            _logger.LogInformation("Usuário atualizado com sucesso: {UserId}", usuario.Id);
+
+            return new BaseResponseDto(true, "Usuário atualizado com sucesso.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao atualizar usuário {UserId}", id);
+            return new BaseResponseDto(false, "Erro ao atualizar o usuário.");
+        }
+    }
+
+    public async Task<BaseResponseDto> ExcluirAsync(Guid id)
+    {
+        try
+        {
+            var usuario = await _usuarioRepository.ObterPorIdAsync(id);
+            if (usuario is null) throw new Exception("Usuário não encontrado");
+
+            usuario.Excluir();
+            await _usuarioRepository.SalvarAsync(usuario, await _usuarioRepository.ObterVersaoAsync(id));
+
+            _logger.LogInformation("Usuário excluído com sucesso: {UserId}", id);
+
+            return new BaseResponseDto(true, "Usuário excluído com sucesso.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Erro ao excluir usuário {UserId}", id);
+            return new BaseResponseDto(false, "Erro ao excluir o usuário.");
+        }
     }
 }

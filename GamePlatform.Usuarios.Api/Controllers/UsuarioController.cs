@@ -3,20 +3,14 @@ using GamePlatform.Usuarios.Application.Interfaces.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace GamePlatform.Api.Controllers;
+namespace GamePlatform.Usuarios.Api.Controllers;
 
 [ApiController]
 [Route("api/usuarios")]
-public class UsuarioController : ControllerBase
+public class UsuarioController(IUsuarioService usuarioService, IUsuarioContextService usuarioContext) : ControllerBase
 {
-    private readonly IUsuarioService _usuarioService;
-    private readonly IUsuarioContextService _usuarioContext;
-
-    public UsuarioController(IUsuarioService usuarioService, IUsuarioContextService usuarioContext)
-    {
-        _usuarioService = usuarioService;
-        _usuarioContext = usuarioContext;
-    }
+    private readonly IUsuarioService _usuarioService = usuarioService;
+    private readonly IUsuarioContextService _usuarioContext = usuarioContext;
 
     /// <summary>
     /// Obtém os dados do usuário autenticado.
@@ -38,7 +32,7 @@ public class UsuarioController : ControllerBase
     /// <param name="id">ID do usuário</param>
     /// <response code="200">Usuário encontrado com sucesso</response>
     /// <response code="404">Usuário não encontrado</response>
-    [HttpGet("{id}")]
+    [HttpGet("{id:guid}")]
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetById(Guid id)
     {
@@ -47,18 +41,29 @@ public class UsuarioController : ControllerBase
     }
 
     /// <summary>
-    /// Atualiza os dados do usuário autenticado.
+    /// Promove um usuário para administrador.
     /// </summary>
-    /// <param name="dto">Dados para atualização do usuário</param>
-    /// <response code="204">Usuário atualizado com sucesso</response>
-    /// <response code="400">Erro na atualização (ex: e-mail em uso ou dados inválidos)</response>
-    [HttpPut("perfil")]
-    [Authorize]
-    public async Task<IActionResult> AtualizarPerfil([FromBody] AtualizarUsuarioDto dto)
+    /// <param name="id">Identificador único do usuário</param>
+    /// <response code="204">Usuário promovido com sucesso</response>
+    /// <response code="400">Erro na promoção (ex: usuário já é administrador ou não encontrado)</response>
+    [HttpPut("{id:guid}/promover")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> PromoverAsync(Guid id)
     {
-        var id = _usuarioContext.GetUsuarioId();
-        var resultado = await _usuarioService.AtualizarAsync(id, dto);
-        return resultado.Sucesso ? NoContent() : BadRequest(resultado.Mensagem);
+        await _usuarioService.PromoverAsync(id);
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Lista todos os usuários cadastrados.
+    /// </summary>
+    /// <response code="200">Lista de usuários retornada com sucesso</response>
+    [HttpGet]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> ObterTodosAsync()
+    {
+        var usuarios = await _usuarioService.ObterTodosAsync();
+        return Ok(usuarios);
     }
 
     /// <summary>
@@ -77,42 +82,25 @@ public class UsuarioController : ControllerBase
     }
 
     /// <summary>
-    /// Exclui a conta do usuário autenticado.
+    /// Exclui (desativa) o usuário especificado pelo ID.
+    /// O usuário será marcado como inativo e um evento de exclusão será registrado.
     /// </summary>
+    /// <param name="id">ID do usuário a ser excluído</param>
     /// <response code="204">Usuário excluído com sucesso</response>
-    /// <response code="400">Erro ao excluir o usuário (ex: usuário não encontrado)</response>
-    [HttpDelete("perfil")]
-    [Authorize]
-    public async Task<IActionResult> ExcluirPerfil()
-    {
-        var id = _usuarioContext.GetUsuarioId();
-        var resultado = await _usuarioService.ExcluirAsync(id);
-        return resultado.Sucesso ? NoContent() : BadRequest(resultado.Mensagem);
-    }
-
-    /// <summary>
-    /// Exclui um usuário específico pelo ID (somente administradores).
-    /// </summary>
-    /// <param name="id">ID do usuário</param>
-    /// <response code="204">Usuário excluído com sucesso</response>
-    /// <response code="400">Erro ao excluir o usuário (ex: usuário não encontrado)</response>
-    [HttpDelete("{id}")]
+    /// <response code="404">Usuário não encontrado</response>
+    /// <response code="500">Erro ao excluir o usuário</response>
+    [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> ExcluirById(Guid id)
+    public async Task<IActionResult> ExcluirAsync(Guid id)
     {
-        var resultado = await _usuarioService.ExcluirAsync(id);
-        return resultado.Sucesso ? NoContent() : BadRequest(resultado.Mensagem);
-    }
-
-    /// <summary>
-    /// Lista todos os usuários do sistema (somente administradores).
-    /// </summary>
-    /// <response code="200">Lista de usuários retornada com sucesso</response>
-    [HttpGet("listar")]
-    [Authorize(Roles = "Admin")]
-    public async Task<IActionResult> ListarTodos()
-    {
-        var usuarios = await _usuarioService.ListarTodosAsync();
-        return Ok(usuarios);
+        try
+        {
+            await _usuarioService.ExcluirAsync(id);
+            return NoContent();
+        }
+        catch (Exception ex) when (ex.Message.Contains("não encontrado"))
+        {
+            return NotFound(new { message = ex.Message });
+        }
     }
 }

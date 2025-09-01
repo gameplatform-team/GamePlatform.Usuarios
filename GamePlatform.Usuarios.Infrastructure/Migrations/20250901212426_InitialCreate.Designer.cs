@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace GamePlatform.Usuarios.Infrastructure.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20250825223043_InitialCreate")]
+    [Migration("20250901212426_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -25,14 +25,55 @@ namespace GamePlatform.Usuarios.Infrastructure.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("GamePlatform.Usuarios.Domain.Entities.Usuario", b =>
+            modelBuilder.Entity("GamePlatform.Usuarios.Domain.Entities.Evento", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<Guid>("AggregateId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+                    b.Property<string>("Dados")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TipoEvento")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Versao")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AggregateId", "Versao")
+                        .IsUnique();
+
+                    b.ToTable("Evento", (string)null);
+                });
+
+            modelBuilder.Entity("GamePlatform.Usuarios.Domain.Entities.UsuarioProjecao", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Ativo")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true);
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP");
 
                     b.Property<string>("Email")
                         .IsRequired()
@@ -55,7 +96,8 @@ namespace GamePlatform.Usuarios.Infrastructure.Migrations
                         .HasColumnType("character varying(500)");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("UpdatedAt");
 
                     b.HasKey("Id");
 

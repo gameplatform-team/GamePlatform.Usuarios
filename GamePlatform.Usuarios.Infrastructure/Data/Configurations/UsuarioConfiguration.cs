@@ -4,9 +4,9 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace GamePlatform.Usuarios.Infrastructure.Data.Configurations;
 
-public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
+public class UsuarioConfiguration : IEntityTypeConfiguration<UsuarioProjecao>
 {
-    public void Configure(EntityTypeBuilder<Usuario> builder)
+    public void Configure(EntityTypeBuilder<UsuarioProjecao> builder)
     {
         builder.ToTable("Usuario");
 
@@ -28,6 +28,18 @@ public class UsuarioConfiguration : IEntityTypeConfiguration<Usuario>
             .IsRequired()
             .HasMaxLength(20);  
 
-        builder.HasIndex(u => u.Email).IsUnique(); 
+        builder.HasIndex(u => u.Email).IsUnique();
+
+        builder.Property(u => u.CreatedAt)
+          .IsRequired()
+          .HasColumnName("CreatedAt")
+          .HasDefaultValueSql("CURRENT_TIMESTAMP");
+
+        builder.Property(u => u.UpdatedAt)
+            .HasColumnName("UpdatedAt");
+
+        builder.Property(u => u.Ativo)
+               .IsRequired()
+               .HasDefaultValue(true);
     }
 }
