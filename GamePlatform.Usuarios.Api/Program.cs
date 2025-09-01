@@ -25,7 +25,7 @@ builder.Services.AddCustomHttpLogging();
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
 // Health check
-//builder.AddCustomHealthCheck();
+builder.AddCustomHealthCheck();
 
 // Adicionar configuracoes do banco de dados e servicos da infraestrutura
 builder.Services.AddInfrastructureServices(builder.Configuration);
@@ -39,37 +39,37 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 });
 builder.Services.AddEndpointsApiExplorer();
-//builder.Services.AddSwaggerWithOptions();
+builder.Services.AddSwaggerWithOptions();
 
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
 // Middleware de log
-//app.UseHttpLogging();
+app.UseHttpLogging();
 
 // Chamar o Seed
-//using (var scope = app.Services.CreateScope())
-//{
-//    var services = scope.ServiceProvider;
-//    var context = services.GetRequiredService<DataContext>();
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var context = services.GetRequiredService<DataContext>();
 
-//    await DbInitializer.SeedAsync(context);
-//}
+    await DbInitializer.SeedAsync(context);
+}
 
 // Middleware do Swagger
-//app.UseSwagger();
-//app.UseSwaggerUI();
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // Health check
-//app.UseHealthChecks("/health", new HealthCheckOptions
-//{
-//    Predicate = _ => true,
-//    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-//}).UseHealthChecksUI(options =>
-//{
-//    options.UIPath = "/health-ui";
-//});
+app.UseHealthChecks("/health", new HealthCheckOptions
+{
+    Predicate = _ => true,
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+}).UseHealthChecksUI(options =>
+{
+    options.UIPath = "/health-ui";
+});
 
 // Middlewares HTTP
 app.UseHttpsRedirection();
