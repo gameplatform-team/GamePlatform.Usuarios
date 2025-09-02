@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.14.36401.2 d17.14
+VisualStudioVersion = 17.14.36401.2
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GamePlatform.Usuarios.Api", "GamePlatform.Usuarios.Api\GamePlatform.Usuarios.Api.csproj", "{2B87AFEE-21A8-41B0-83B2-C10A9E8BEBDC}"
 EndProject
@@ -10,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GamePlatform.Usuarios.Domain", "GamePlatform.Usuarios.Domain\GamePlatform.Usuarios.Domain.csproj", "{01759196-211F-44D2-8E0A-DB6FDAF2625E}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GamePlatform.Usuarios.Infrastructure", "GamePlatform.Usuarios.Infrastructure\GamePlatform.Usuarios.Infrastructure.csproj", "{E47E902A-5FCD-440A-A27A-14E50926E1FF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GamePlatform.Usuarios.Tests", "GamePlatform.Usuarios.Tests\GamePlatform.Usuarios.Tests.csproj", "{3E607431-5ABB-4300-B0FD-D93F3C566A9A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{E47E902A-5FCD-440A-A27A-14E50926E1FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E47E902A-5FCD-440A-A27A-14E50926E1FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E47E902A-5FCD-440A-A27A-14E50926E1FF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E607431-5ABB-4300-B0FD-D93F3C566A9A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E607431-5ABB-4300-B0FD-D93F3C566A9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E607431-5ABB-4300-B0FD-D93F3C566A9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E607431-5ABB-4300-B0FD-D93F3C566A9A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
