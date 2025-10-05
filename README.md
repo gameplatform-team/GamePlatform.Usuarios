@@ -1,7 +1,7 @@
 # GamePlatform
 
 ## 📋 Sobre o Projeto
-GamePlatform é uma aplicação .NET 8.0 desenvolvida seguindo os princípios da Clean Architecture, oferecendo uma plataforma robusta e escalável para gerenciamento de jogos.
+GamePlatform.Usuarios é um microserviço .NET 8.0 desenvolvida seguindo os princípios da Clean Architecture, oferecendo uma plataforma robusta e escalável para gerenciamento de usuários.
 
 ## 🏗️ Arquitetura
 
@@ -24,12 +24,12 @@ O projeto está estruturado em camadas:
 1. Clone o repositório:
 
 ```bash
-git clone https://github.com/rafaelozelin/GamePlatform.git
+https://github.com/gameplatform-team/GamePlatform.Usuarios.git
 ```
 
 2. Navegue até a pasta do projeto:
 ```bash
-cd GamePlatform
+cd GamePlatform.Usuarios
 ``` 
 
 3. Restaure as dependências:
@@ -39,7 +39,7 @@ dotnet restore
 
 4. Execute a aplicação:
 ```bash
-cd GamePlatform.Api
+cd GamePlatform.Usuarios.Api
 ``` 
 ```bash
 dotnet run
@@ -67,11 +67,11 @@ dotnet test
 
 ```plaintext
 GamePlatform/
-├── GamePlatform.Api/            # API endpoints e configurações
-├── GamePlatform.Application/    # Casos de uso e lógica de aplicação
-├── GamePlatform.Domain/         # Entidades e regras de negócio
-├── GamePlatform.Infrastructure/ # Implementações de repositórios e serviços
-└── GamePlatform.Tests/          # Testes unitários
+├── GamePlatform.Usuarios.Api/            # API endpoints e configurações
+├── GamePlatform.Usuarios.Application/    # Casos de uso e lógica de aplicação
+├── GamePlatform.Usuarios.Domain/         # Entidades e regras de negócio
+├── GamePlatform.Usuarios.Infrastructure/ # Implementações de repositórios e serviços
+└── GamePlatform.Usuarios.Tests/          # Testes unitários
 ```
 
 ## 🔄 CI/CD
