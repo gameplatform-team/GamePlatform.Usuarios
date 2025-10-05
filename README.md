@@ -1,4 +1,4 @@
-# GamePlatform
+# GamePlatform.Usuarios
 
 ## 📋 Sobre o Projeto
 GamePlatform.Usuarios é um microserviço .NET 8.0 desenvolvida seguindo os princípios da Clean Architecture, oferecendo uma plataforma robusta e escalável para gerenciamento de usuários.
