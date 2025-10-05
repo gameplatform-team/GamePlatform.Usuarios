@@ -7,11 +7,11 @@ GamePlatform.Usuarios é um microserviço .NET 8.0 desenvolvida seguindo os prin
 
 O projeto está estruturado em camadas:
 
-- **GamePlatform.Api**: Camada de apresentação que expõe as APIs RESTful
-- **GamePlatform.Application**: Contém a lógica de aplicação e casos de uso
-- **GamePlatform.Domain**: Define as entidades de domínio e regras de negócio
-- **GamePlatform.Infrastructure**: Implementa o acesso a dados e serviços externos
-- **GamePlatform.Tests**: Projeto de testes unitários
+- **GamePlatform.Usuarios.Api**: Camada de apresentação que expõe as APIs RESTful
+- **GamePlatform.Usuarios.Application**: Contém a lógica de aplicação e casos de uso
+- **GamePlatform.Usuarios.Domain**: Define as entidades de domínio e regras de negócio
+- **GamePlatform.Usuarios.Infrastructure**: Implementa o acesso a dados e serviços externos
+- **GamePlatform.Usuarios.Tests**: Projeto de testes unitários
 
 ## 🚀 Como Executar
 
