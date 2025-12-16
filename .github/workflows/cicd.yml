@@ -28,8 +28,8 @@ jobs:
     - name: Build
       run: dotnet build GamePlatform.Usuarios.sln --configuration Release --no-restore
 
-   # - name: Testes
-   #   run: dotnet test GamePlatform.Usuarios.Tests/GamePlatform.Usuarios.Tests.csproj --verbosity normal
+    - name: Testes
+      run: dotnet test GamePlatform.Usuarios.Tests/GamePlatform.Usuarios.Tests.csproj --verbosity normal
 
   build-and-deploy:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -57,16 +57,6 @@ jobs:
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      # - name: Deploy para o Azure Container Apps
-      #   uses: azure/container-apps-deploy-action@v1
-      #   with:
-      #     resourceGroup: 'gameplatform'
-      #     containerAppName: 'gameplatform-usuarios-api'
-      #     imageToDeploy: ${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
-      #     targetPort: 8080
-      #     location: 'brazilsouth'
-      #     containerAppEnvironment: 'gameplatform-apis'
           
       - name: Kubernetes Set Context
         uses: Azure/k8s-set-context@v3.0
@@ -91,3 +81,4 @@ jobs:
           sed -i "s|IMAGE_PLACEHOLDER|${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}|g" k8s/deployment.yaml
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/hpa.yaml
